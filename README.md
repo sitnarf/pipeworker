@@ -10,7 +10,7 @@ This library servers as framework for creating data processing blocks, which can
 class MyBlock(Block):
 	def execute(data):
 		# do some magic
-    # ...
+		# ...
 		return transformed_data
 		
 ```
