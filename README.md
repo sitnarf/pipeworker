@@ -8,10 +8,10 @@ This library servers as framework for creating data processing blocks, which can
 
 ```python
 class MyBlock(Block):
-	def execute(data):
-		# do some magic
-		# ...
-		return transformed_data
+    def execute(data):
+        # do some magic
+        # ...
+        return transformed_data
 		
 ```
 
@@ -25,9 +25,9 @@ pipe = Pipeline(
     FillNaN() |
     TrainTestSplit(shuffle=False) |
     (
-            SES().set_name("SES") &
-            (SARIMA((2, 1, 1), (0, 1, 0, 12)).set_name("SARIMA 1")) &
-            (SARIMA((2, 1, 1), (0, 0, 0, 12)).set_name("SARIMA 2"))
+        SES().set_name("SES") &
+        (SARIMA((2, 1, 1), (0, 1, 0, 12)).set_name("SARIMA 1")) &
+        (SARIMA((2, 1, 1), (0, 0, 0, 12)).set_name("SARIMA 2"))
     ) |
     Map(Measure(measurements=[mae, mape], column="passengers")) |
     Map(PrintMeasurements()) |
