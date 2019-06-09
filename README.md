@@ -1,6 +1,6 @@
 # Pipeworker
 
-This library serves as a framework for creating data processing blocks, which can be then interconnected to create a machine learning and data mining pipelines.
+This library serves as a framework for creating data processing blocks, which can be then interconnected to create machine learning and data mining pipelines.
 
 ## Basic concepts
 
