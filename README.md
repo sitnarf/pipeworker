@@ -1,6 +1,6 @@
 # Pipeworker
 
-This library servers as framework for creating data processing blocks, which can be then interconnected to create machine learning and data mining pipelines.
+This library serves as a framework for creating data processing blocks, which can be then interconnected to create a machine learning and data mining pipelines.
 
 ## Basic concepts
 
@@ -12,10 +12,10 @@ class MyBlock(Block):
         # do some magic
         # ...
         return transformed_data
-		
+        
 ```
 
-Basic building blocks of your pipeline. Only thing you have to implement is `execute` method. Argument is input and returned value is output of the block.
+Basic building blocks of your pipeline. The only thing you have to implement is the `execute` method. Its argument is the input and the returned value is the output of the block.
 
 ## Example
 
@@ -40,8 +40,8 @@ For full example, see [pipeworker-example](https://github.com/sitnarf/pipeworker
 ## Roadmap
 
 1. **Caching**
-   Important feature. This will allow skip blocks, which haven't changed, and use cached version instead.
+   Important feature. This will allow skipping blocks, which haven't changed and use the cached version instead.
 2. **Parallelism**
    Parallel blocks are well-suited for implicit concurrent execution.
 3. **Functions as blocks**
-   Currently, you have to create class to define a new block. This improvement of API will allow to use also functions. 
+   Currently, you have to create a class to define a new block. This improvement of API will allow using also functions. 
