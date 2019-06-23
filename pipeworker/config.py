@@ -1,5 +1,6 @@
 from infusion.Context import Context
 
-config = Context({
-     "verbose_level": 2,
+
+CONFIG = Context({
+    "verbose_level": 2,
 })

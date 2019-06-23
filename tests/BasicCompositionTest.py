@@ -1,5 +1,5 @@
 import unittest
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 
 
 class BasicCompositionTest(unittest.TestCase):

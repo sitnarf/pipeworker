@@ -1,11 +1,39 @@
+from abc import ABC, abstractmethod
 from collections import defaultdict
-
-from pipeworker.functions.utils import dict_deep_merge
-from pipeworker.types.Mergable import Mergable
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Union, TypeVar
+from typing import Any, Union
+from typing import TypeVar
+
 from pandas import DataFrame
+
+from pipeworker.functions.utils import dict_deep_merge
+
+
+class Mergable(ABC):
+    @abstractmethod
+    def merge(self, what): pass
+
+
+class Invokable(ABC):
+    @abstractmethod
+    def invoke(self, data: Any) -> Any: pass
+
+
+@dataclass
+class TrainAndTestDataset(Mergable):
+    train: DataFrame
+    test: DataFrame
+    label: str = None
+    payload: dict = field(default_factory=lambda: {})
+
+    def merge(self, what: 'TrainAndTestDataset') -> 'TrainAndTestDataset':
+        return TrainAndTestDataset(
+            train=self.train.join(what.train),
+            test=self.test.join(what.test),
+            label=self.label,
+            payload={**self.payload, **what.payload}
+        )
 
 
 T = TypeVar('T')

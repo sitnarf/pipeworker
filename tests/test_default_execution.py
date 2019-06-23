@@ -1,19 +1,18 @@
 import unittest
-from pipeworker.base.Block import Block
-from pipeworker.base.Pipeline import Pipeline
+
+from pipeworker.base import Block, Pipeline
 
 
 class BasicCompositionTest(unittest.TestCase):
     def test_sequences(self):
-
         block1 = Block()
         block2 = Block()
         block3 = Block()
 
         sequence = (
-            block1 |
-            block2 |
-            block3
+                block1 |
+                block2 |
+                block3
         )
 
         pipeline = Pipeline(sequence)
@@ -24,22 +23,21 @@ class BasicCompositionTest(unittest.TestCase):
         )
 
     def test_parallel(self):
-
         block1 = Block()
         block2 = Block()
         block3 = Block()
 
         parallel = (
-            block1 |
-            block2 |
-            block3
+                block1 &
+                block2 &
+                block3
         )
 
         pipeline = Pipeline(parallel)
 
         self.assertEqual(
             pipeline.execute(10),
-            10
+            {0: 10, 1: 10, 2: 10}
         )
 
 

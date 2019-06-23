@@ -3,7 +3,7 @@ from itertools import chain
 from collections.abc import Mapping
 from functools import reduce
 from typing import Iterable, TypeVar, List, Dict, Union
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 from pipeworker.utils import is_primitive
 
 

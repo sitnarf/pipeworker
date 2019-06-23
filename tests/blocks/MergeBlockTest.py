@@ -1,7 +1,6 @@
 import unittest
 
-from pipeworker.base.Block import Block
-from pipeworker.base.Pipeline import Pipeline
+from pipeworker.base import Block, Pipeline
 from pipeworker.blocks.Data import Data
 from pipeworker.blocks.Merge import Merge
 

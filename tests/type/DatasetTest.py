@@ -1,5 +1,5 @@
 import unittest
-from pipeworker.types.Dataset import Dataset
+from pipeworker.type.Dataset import Dataset
 from pandas import DataFrame
 
 

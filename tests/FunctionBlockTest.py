@@ -1,5 +1,5 @@
 import unittest
-from pipeworker.base.Pipeline import Pipeline
+from pipeworker.base import Pipeline
 from pipeworker.blocks.Function import Function
 
 

@@ -1,6 +1,6 @@
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 from pipeworker.functions.utils import title, table
-from pipeworker.types.Dataset import Dataset
+from pipeworker.types import Dataset
 
 
 class PrintMeasurements(Block):

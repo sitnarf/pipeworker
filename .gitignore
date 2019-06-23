@@ -4,3 +4,4 @@ dist
 __pycache__
 temp
 *.egg-info
+.mypy_cache

@@ -1,9 +1,8 @@
 from abc import ABC
 from datetime import datetime
 
-from pipeworker.blocks.cache.CacheMissException import CacheMissException
-from pipeworker.blocks.cache.FileCache import FileCache
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
+from pipeworker.cache import CacheMissException, FileCache
 from pipeworker.utils import log
 
 
@@ -11,7 +10,7 @@ class CachedBlock(Block, ABC):
     cache_engine = None
 
     def invoke(self, data=None):
-        if not not hasattr(self, 'cache_engine'):
+        if not hasattr(self, 'cache_engine'):
             self.cache_engine = FileCache()
 
         try:
@@ -44,6 +43,12 @@ class CachedBlock(Block, ABC):
     def set_cache_engine(self, cache_engine):
         self.cache_engine = cache_engine
         return self
+
+    def _did_code_changed(self) -> bool:
+        return True
+
+    def should_use_cache(self, input_changed: bool) -> bool:
+        return not self._did_code_changed() and not input_changed
 
     def get_cache_serial(self):
         log("Warning: Method get_cache_serial was not overridden, using current hour as fallback", 2)

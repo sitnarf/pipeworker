@@ -1,11 +1,9 @@
 import unittest
 
-from pipeworker.blocks.cache.CacheMissException import CacheMissException
-from pipeworker.blocks.cache.FileCache import FileCache
+from pipeworker.cache import FileCache, CacheMissException
 
 
 class FileCacheTest(unittest.TestCase):
-
     CACHE_PATH = "./tests/temp/cache.pickle"
 
     def test_cache(self):

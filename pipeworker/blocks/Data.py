@@ -1,6 +1,6 @@
 from copy import copy
 from pydash import assign
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 
 
 class Data(Block):

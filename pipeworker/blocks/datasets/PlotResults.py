@@ -1,7 +1,7 @@
 from typing import Iterable
 from matplotlib import pyplot
-from pipeworker.base.Block import Block
-from pipeworker.types.Dataset import Dataset
+from pipeworker.base import Block
+from pipeworker.types import Dataset
 
 
 class PlotForecast(Block):

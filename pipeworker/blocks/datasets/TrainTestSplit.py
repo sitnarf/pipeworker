@@ -1,4 +1,4 @@
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 from pipeworker.types import Dataset
 from sklearn.model_selection import train_test_split
 

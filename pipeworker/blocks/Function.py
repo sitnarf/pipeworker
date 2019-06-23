@@ -1,6 +1,6 @@
 from typing import Callable, Any
 
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 
 
 class Function(Block):

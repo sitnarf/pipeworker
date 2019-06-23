@@ -1,7 +1,7 @@
 import unittest
 from pandas import DataFrame
 from pipeworker.blocks.datasets.CompareMeasurementAndPrint import CompareMeasurementAndPrint
-from pipeworker.types.Dataset import Dataset
+from pipeworker.type.Dataset import Dataset
 
 
 class CompareAndPrintTest(unittest.TestCase):

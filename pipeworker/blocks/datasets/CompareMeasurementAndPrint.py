@@ -1,11 +1,11 @@
 from typing import Dict, List, Union
-from termcolor import colored, cprint
+
 from numpy import mean
 from pydash import sort
-from tabulate import tabulate
-from pipeworker.base.Block import Block
+
+from pipeworker.base import Block
 from pipeworker.functions.utils import title, sign_color, table
-from pipeworker.types.Dataset import Dataset
+from pipeworker.types import Dataset
 
 
 class CompareMeasurementAndPrint(Block):
@@ -16,8 +16,8 @@ class CompareMeasurementAndPrint(Block):
 
     def datasets_difference(self, dataset1: Dataset, dataset2: Dataset) -> float:
         return (
-            dataset1.payload["measurements"][self.which] -
-            dataset2.payload["measurements"][self.which]
+                dataset1.payload["measurements"][self.which] -
+                dataset2.payload["measurements"][self.which]
         )
 
     def compute(self, datasets: Dict[str, Dataset]) -> List[List[Union[str, float]]]:
@@ -26,10 +26,10 @@ class CompareMeasurementAndPrint(Block):
         for key1, dataset1 in datasets.items():
             measurement_sum = 0
             for key2, dataset2 in datasets.items():
-                if(key1 != key2):
+                if (key1 != key2):
                     measurement_sum += self.datasets_difference(dataset1, dataset2)
 
-            averaged.append({"key": key1, "avg": measurement_sum / (len(datasets)-1)})
+            averaged.append({"key": key1, "avg": measurement_sum / (len(datasets) - 1)})
 
         sort(averaged, lambda item1, item2: mean(item1["avg"]) - mean(item2["avg"]))
         sorted_keys = list(map(lambda item: item["key"], averaged))
@@ -49,7 +49,7 @@ class CompareMeasurementAndPrint(Block):
 
     def execute(self, datasets: Dict[str, Dataset]) -> Dict[str, Dataset]:
         computed = self.compute(datasets)
-        output = []
+        output: List = []
 
         output.append((
             "",
@@ -62,7 +62,7 @@ class CompareMeasurementAndPrint(Block):
             for cell_number, cell in enumerate(line):
                 if cell_number == 0:
                     output_line.append(cell)
-                elif cell_number-1 == line_number:
+                elif cell_number - 1 == line_number:
                     output_line.append("")
                 else:
                     output_line.append(sign_color("%.2f" % cell, cell))

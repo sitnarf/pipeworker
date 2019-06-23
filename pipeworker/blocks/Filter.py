@@ -1,6 +1,6 @@
 from collections import Mapping
 from toolz import valfilter
-from pipeworker.base.Block import Block
+from pipeworker.base import Block
 from pipeworker.types import Invokable
 
 

@@ -1,14 +1,16 @@
 from typing import Callable, Iterable
+
 from sklearn.metrics import mean_absolute_error
 import numpy as np
+
 from pipeworker.types import Dataset
 
 
 def apply_to_dataset(
-    metric: Callable[[Iterable[float], Iterable[float]], float],
-    payload_key: str,
-    dataset: Dataset,
-    column: str
+        metric: Callable[[Iterable[float], Iterable[float]], float],
+        payload_key: str,
+        dataset: Dataset,
+        column: str
 ) -> Dataset:
     y_predict = dataset.predict[column]
     y_test = dataset.data.loc[dataset.predict.index][column]

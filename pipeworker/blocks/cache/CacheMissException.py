@@ -1,2 +1,0 @@
-class CacheMissException(Exception):
-    pass
