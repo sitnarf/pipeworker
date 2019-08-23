@@ -26,7 +26,7 @@ For full example, see [pipeworker-example](https://github.com/sitnarf/pipeworker
 
 Preprocessing data, training model and evaluation can be expressed as sequence of nodes. Every node has input and output. nodes can be connected serially (| operator) or in parallel (& operator). 
 
-### nodes
+### Nodes
 
 ```python
 class Mynode(Node):
