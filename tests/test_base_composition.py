@@ -1,6 +1,6 @@
 import unittest
 
-from pipeworker.base import Node, Pipeline
+from pipeworker.base import Node
 
 
 class BasicCompositionTest(unittest.TestCase):
@@ -13,13 +13,11 @@ class BasicCompositionTest(unittest.TestCase):
                 node1 |
                 node2 |
                 node3
-        ).not_cache()
-
-        pipeline = Pipeline(sequence)
+        )
 
         self.assertEqual(
-            pipeline.execute(10),
-            10
+            len(list(sequence)),
+            3,
         )
 
     def test_parallel(self):
@@ -33,11 +31,9 @@ class BasicCompositionTest(unittest.TestCase):
                 node3
         )
 
-        pipeline = Pipeline(parallel)
-
         self.assertEqual(
-            pipeline.execute(10),
-            {0: 10, 1: 10, 2: 10}
+            len(list(parallel)),
+            3,
         )
 
 

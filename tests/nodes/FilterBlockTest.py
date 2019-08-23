@@ -1,9 +1,9 @@
 import unittest
-from pipeworker.base import Block, Pipeline
-from pipeworker.blocks.Filter import Filter
+from pipeworker.base import Node, Pipeline
+from pipeworker.nodes.Filter import Filter
 
 
-class MultiplyBy(Block):
+class MultiplyBy(Node):
 
     def __init__(self, by):
         self.by = by
@@ -12,7 +12,7 @@ class MultiplyBy(Block):
         return input_data < 3
 
 
-class FilterBlockTest(unittest.TestCase):
+class FilternodeTest(unittest.TestCase):
 
     def test_merge(self):
 

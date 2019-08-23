@@ -3,12 +3,13 @@ from typing import Dict, List, Union
 from numpy import mean
 from pydash import sort
 
-from pipeworker.base import Block
+from pipeworker.base import Node, NodeExecutionResponse
 from pipeworker.functions.utils import title, sign_color, table
 from pipeworker.types import Dataset
+from pipeworker.utils import log
 
 
-class CompareMeasurementAndPrint(Block):
+class CompareMeasurementAndPrint(Node):
     which: str
 
     def __init__(self, which: str):
@@ -70,4 +71,9 @@ class CompareMeasurementAndPrint(Block):
 
         print(title("\nAbsolute difference in %s" % self.which))
         print(table(output))
+        print()
         return datasets
+
+    def _log_execution_policy(self, execution_policy: NodeExecutionResponse) -> None:
+        print()
+        log(self.full_name)

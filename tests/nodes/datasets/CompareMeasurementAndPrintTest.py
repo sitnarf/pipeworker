@@ -1,14 +1,14 @@
 import unittest
 from pandas import DataFrame
-from pipeworker.blocks.datasets.CompareMeasurementAndPrint import CompareMeasurementAndPrint
+from pipeworker.nodes.datasets.CompareMeasurementAndPrint import CompareMeasurementAndPrint
 from pipeworker.type.Dataset import Dataset
 
 
 class CompareAndPrintTest(unittest.TestCase):
 
     def test_compute(self):
-        block = CompareMeasurementAndPrint("a")
-        result = block.compute({
+        node = CompareMeasurementAndPrint("a")
+        result = node.compute({
             "0": Dataset(DataFrame({}), label="dataset1", payload={
                 "measurements": {
                     "a": 4,

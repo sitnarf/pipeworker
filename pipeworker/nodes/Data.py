@@ -1,9 +1,9 @@
 from copy import copy
 from pydash import assign
-from pipeworker.base import Block
+from pipeworker.base import Node
 
 
-class Data(Block):
+class Data(Node):
 
     def __init__(self, data):
         self.data = data

@@ -23,7 +23,8 @@ def dict_deep_merge(dct1, dct2, override=True) -> dict:
 
 
 def title(text: str):
-    return text + "\n" + ("=" * round(len(text)))
+    return text + "\n" + ("-" * round(len(text)))
+
 
 def sign_color(string: str, number: float) -> str:
     if number == 0:
@@ -31,5 +32,6 @@ def sign_color(string: str, number: float) -> str:
     else:
         return colored(string, "red" if number > 0 else "green")
 
+
 def table(table, **kwargs):
-    return tabulate(table, tablefmt="fancy_grid", floatfmt=".2f", **kwargs)
+    return tabulate(table, tablefmt="presto", floatfmt=".2f", **kwargs)

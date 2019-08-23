@@ -1,10 +1,11 @@
 import unittest
-from pipeworker.type.Dataset import Dataset
+
 from pandas import DataFrame
+
+from pipeworker.types import Dataset
 
 
 class DatasetTest(unittest.TestCase):
-
     def test_merge(self):
         dataset = Dataset(
             data=DataFrame(

@@ -1,7 +1,7 @@
 import unittest
 from pandas import DataFrame
 from pipeworker.base import Pipeline
-from pipeworker.blocks.datasets.TrainTestSplit import TrainTestSplit
+from pipeworker.nodes.datasets.TrainTestSplit import TrainTestSplit
 from pipeworker.type.Dataset import Dataset
 
 

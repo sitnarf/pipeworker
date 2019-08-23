@@ -1,4 +1,4 @@
 [MASTER]
 ignore-patterns=test_.*\.py
 [MESSAGES CONTROL]
-disable=missing-docstring,no-self-use,too-few-public-methods,no-else-return,abstract-method
+disable=missing-docstring,no-self-use,too-few-public-methods,no-else-return,abstract-method,W0108,no-value-for-parameter,C0103

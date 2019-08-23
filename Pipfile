@@ -19,6 +19,9 @@ matplotlib = "*"
 mypy = "*"
 pylint = "*"
 typing-extensions = "==3.7.2"
+pyramda = "*"
+colored = "*"
+statsmodels = "*"
 
 [requires]
 python_version = "3.7"

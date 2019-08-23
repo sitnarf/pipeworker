@@ -1,6 +1,6 @@
 import unittest
 from pandas import DataFrame
-from pipeworker.blocks.datasets.Measure import Measure
+from pipeworker.nodes.datasets.Measure import Measure
 from pipeworker.type.Dataset import Dataset
 
 

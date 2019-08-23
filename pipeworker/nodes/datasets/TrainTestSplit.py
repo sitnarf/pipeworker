@@ -1,9 +1,9 @@
-from pipeworker.base import Block
+from pipeworker.base import Node
 from pipeworker.types import Dataset
 from sklearn.model_selection import train_test_split
 
 
-class TrainTestSplit(Block):
+class TrainTestSplit(Node):
     def __init__(self, **params):
         self.params = params
 

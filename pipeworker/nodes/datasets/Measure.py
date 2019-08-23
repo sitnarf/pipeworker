@@ -1,11 +1,12 @@
 from functools import reduce
 from typing import Callable, Iterable
 
-from pipeworker.base import Block
+from pipeworker.base import Node, NodeExecutionResponse
 from pipeworker.types import Dataset
+from pipeworker.utils import log
 
 
-class Measure(Block):
+class Measure(Node):
     def __init__(
             self,
             measurements: Iterable[Callable[[Dataset], Dataset]],
@@ -18,7 +19,10 @@ class Measure(Block):
         evaluated = reduce(
             lambda dataset, metric: metric(dataset, self.column),
             self.measurements,
-            input_dataset
+            dataset
         )
 
         return evaluated
+
+    def _log_execution_policy(self, execution_policy: NodeExecutionResponse) -> None:
+        log(self.full_name)

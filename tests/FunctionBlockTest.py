@@ -1,9 +1,9 @@
 import unittest
 from pipeworker.base import Pipeline
-from pipeworker.blocks.Function import Function
+from pipeworker.nodes.Function import Function
 
 
-class FunctionBlockTest(unittest.TestCase):
+class FunctionnodeTest(unittest.TestCase):
 
     def test_functions(self):
 

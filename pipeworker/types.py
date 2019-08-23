@@ -1,30 +1,32 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any, Union, Optional, Generic
 from typing import TypeVar
 
 from pandas import DataFrame
 
 from pipeworker.functions.utils import dict_deep_merge
+from pipeworker.utils import NestedDict
 
 
 class Mergable(ABC):
     @abstractmethod
-    def merge(self, what): pass
+    def merge(self, what):
+        pass
 
 
 class Invokable(ABC):
     @abstractmethod
-    def invoke(self, data: Any) -> Any: pass
+    def invoke(self, data: Any) -> Any:
+        pass
 
 
 @dataclass
 class TrainAndTestDataset(Mergable):
     train: DataFrame
     test: DataFrame
-    label: str = None
+    label: Optional[str] = None
     payload: dict = field(default_factory=lambda: {})
 
     def merge(self, what: 'TrainAndTestDataset') -> 'TrainAndTestDataset':
@@ -40,12 +42,12 @@ T = TypeVar('T')
 
 
 @dataclass
-class Dataset(Mergable):
+class Dataset(Mergable, Generic[T]):
     data: T
-    train: T = None
-    predict: T = None
-    label: str = None
-    payload: dict = field(default_factory=lambda: defaultdict(lambda: defaultdict(int)))
+    payload: dict = field(default_factory=NestedDict)
+    train: Optional[T] = None
+    predict: Optional[T] = None
+    label: Optional[str] = None
 
     def merge(self, what: Union['Dataset', DataFrame]) -> 'Dataset':
         frame_to_merge = what.data if isinstance(what, Dataset) else what
@@ -55,7 +57,7 @@ class Dataset(Mergable):
             payload=deepcopy(self.payload)
         )
 
-    def update(self, deep_merge: bool = False, **parameters):
+    def update(self, deep_merge: bool = False, **parameters) -> "Dataset":
         return Dataset(
             **(
                 {
@@ -69,5 +71,5 @@ class Dataset(Mergable):
             )
         )
 
-    def update_payload(self, **payload):
-        pass
+    def update_payload(self, **payload) -> "Dataset":
+        return self.update(payload=dict_deep_merge(self.payload, payload))

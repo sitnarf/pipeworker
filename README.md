@@ -1,6 +1,6 @@
 # Pipeworker
 
-This library servers as framework for creating data processing blocks, which can be then interconnected to create machine learning and data mining pipelines.
+This library servers as framework for creating data processing nodes, which can be then interconnected to create machine learning and data mining pipelines.
 
 ## Example
 
@@ -24,29 +24,29 @@ For full example, see [pipeworker-example](https://github.com/sitnarf/pipeworker
 
 ## Basic concepts
 
-Preprocessing data, training model and evaluation can be expressed as sequence of blocks. Every block has input and output. Blocks can be connected serially (| operator) or in parallel (& operator). 
+Preprocessing data, training model and evaluation can be expressed as sequence of nodes. Every node has input and output. nodes can be connected serially (| operator) or in parallel (& operator). 
 
-### Blocks
+### nodes
 
 ```python
-class MyBlock(Block):
+class Mynode(Node):
 	def execute(data):
 		# do some magic
 		return transformed_data
 		
 ```
 
-Basic building blocks of your pipeline. Only thing you have to implement is `execute` method. The argument is an input and the returned value is an output of the block.
+Basic building nodes of your pipeline. Only thing you have to implement is `execute` method. The argument is an input and the returned value is an output of the node.
 
 ### Connecting
 
-When serial operator (|) is used, output of previous block is simple passed to subsequent structure. 
+When serial operator (|) is used, output of previous node is simple passed to subsequent structure. 
 
 ## Roadmap
 
 1. **Caching**
-   Important feature. This will allow skip blocks, which haven't changed, and use cached version instead.
+   Important feature. This will allow skip nodes, which haven't changed, and use cached version instead.
 2. **Parallelism**
-   Parallel blocks are well-suited for implicit concurrent execution.
-3. **Functions as blocks**
-   Currently, you have to create class to define a new block. This improvement of API will allow to use also functions. 
+   Parallel nodes are well-suited for implicit concurrent execution.
+3. **Functions as nodes**
+   Currently, you have to create class to define a new node. This improvement of API will allow to use also functions. 

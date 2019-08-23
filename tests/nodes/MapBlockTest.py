@@ -1,9 +1,9 @@
 import unittest
-from pipeworker.base import Block, Pipeline
-from pipeworker.blocks.transformers import Map
+from pipeworker.base import Node, Pipeline
+from pipeworker.nodes.transformers import Map
 
 
-class MultiplyBy(Block):
+class MultiplyBy(Node):
 
     def __init__(self, by):
         self.by = by
@@ -12,7 +12,7 @@ class MultiplyBy(Block):
         return input_data * self.by
 
 
-class MapBlockTest(unittest.TestCase):
+class MapnodeTest(unittest.TestCase):
 
     def test_merge(self):
 

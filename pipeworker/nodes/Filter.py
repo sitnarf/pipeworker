@@ -1,18 +1,18 @@
 from collections import Mapping
 from toolz import valfilter
-from pipeworker.base import Block
+from pipeworker.base import Node
 from pipeworker.types import Invokable
 
 
-class Filter(Block):
+class Filter(Node):
 
-    def __init__(self, block: Invokable):
-        self.block = block
+    def __init__(self, node: Invokable):
+        self.node = node
 
     def execute(self, data):
         return (
             (valfilter if isinstance(data, Mapping) else filter)(
-                lambda value: self.block.invoke(value),
+                lambda value: self.node.invoke(value),
                 data,
             )
         )

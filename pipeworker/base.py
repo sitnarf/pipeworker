@@ -1,24 +1,26 @@
 from abc import abstractmethod
+from copy import deepcopy, copy
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 from functools import reduce
 import inspect
+from itertools import chain
 from typing import Any, TypeVar, List, Optional
 
 from toolz import pipe, valmap
 from typing_extensions import Protocol
 import toolz.curried as c
 
-from pipeworker.cache import \
-    Cache, \
-    FileCache, \
+from pipeworker.cache_engine import \
+    CacheEngine, \
+    FileCacheEngine, \
     CachedOutput, \
     CodeStateGenerator, \
     CodeState, \
     CacheMissException
 from pipeworker.functional import provide_previous
 from pipeworker.immutable import set_immutable, immutable_action
-from pipeworker.utils import hash_str
+from pipeworker.utils import hash_str, log, copy_first_level
 
 
 class Pipeline:
@@ -26,23 +28,19 @@ class Pipeline:
         self.pipeline = pipeline
 
     def execute(self, data=None):
-        return self.pipeline.invoke(InvocationData(data)).output
+        return self.pipeline.invoke(InvocationResult(data)).output
 
 
 @dataclass
-class InvocationData:
+class InvocationResult:
     output: Any
-    did_change: bool = False
+    executed: Optional[bool] = None
 
 
 class Invokable(Protocol):
     @abstractmethod
-    def invoke(self, data: InvocationData) -> InvocationData:
+    def invoke(self, invocation: InvocationResult = None) -> InvocationResult:
         raise NotImplementedError()
-
-
-WithContextSelf = TypeVar("WithContextSelf", bound="WithContext")
-WithContextT = TypeVar("WithContextT", bound="WithContext")
 
 
 class CacheBehaviour(Enum):
@@ -51,38 +49,85 @@ class CacheBehaviour(Enum):
     AUTO = auto()
 
 
+class LogLevel(IntEnum):
+    DISABLED = 0
+    ENABLED = 1
+    VERBOSE = 2
+
+
+WithContextSelf = TypeVar("WithContextSelf", bound="WithContext")
+WithContextT = TypeVar("WithContextT", bound="WithContext")
+
+
 class WithContext(Protocol):
     cache_behaviour: CacheBehaviour = CacheBehaviour.AUTO
 
-    cache_engine: Cache = FileCache()
+    cache_engine: CacheEngine = FileCacheEngine()
 
-    _ancestors: List[str] = []
+    log_level: LogLevel = LogLevel.DISABLED
+
+    def set_log_level(self: WithContextSelf, log_level: LogLevel) -> WithContextSelf:
+        return self._set_immutable_and_propagate("log_level", log_level)
 
     def cache(self: WithContextSelf) -> WithContextSelf:
-        return set_immutable(self, "cache_behaviour", CacheBehaviour.ALWAYS)
+        return self._set_immutable_and_propagate("cache_behaviour", CacheBehaviour.ALWAYS)
 
     def not_cache(self: WithContextSelf) -> WithContextSelf:
-        return set_immutable(self, "cache_behaviour", CacheBehaviour.NEVER)
+        return self._set_immutable_and_propagate("cache_behaviour", CacheBehaviour.NEVER)
 
-    def set_cache_engine(self: WithContextSelf, cache_engine: Cache) -> WithContextSelf:
-        self.cache_engine = cache_engine
-        return self
+    def set_cache_engine(self: WithContextSelf, cache_engine: CacheEngine) -> WithContextSelf:
+        return self._set_immutable_and_propagate("cache_engine", cache_engine)
 
-    def _provide_context(self, with_context: WithContextT) -> WithContextT:
+    def provide_context(self, with_context: WithContextT) -> WithContextT:
         with_context.cache_behaviour = self.cache_behaviour
+        with_context.log_level = self.log_level
+        with_context.cache_engine = self.cache_engine
+        with_context.propagate_context()
         return with_context
+
+    def _set_immutable_and_propagate(
+            self: WithContextSelf,
+            attribute: str,
+            value: Any
+    ) -> WithContextSelf:
+        updated = set_immutable(self, attribute, value)
+        updated.propagate_context()
+        return updated
+
+    def propagate_context(self: WithContextSelf) -> None:
+        pass
 
 
 ComponentSelf = TypeVar("ComponentSelf", bound="Component")
 
 
 class Component(Invokable, WithContext, Protocol):
-    name: str
+    _name: Optional[str] = None
+
+    ancestors: List["Component"] = []
 
     _identifier: Optional[str] = None
 
     def set_name(self: ComponentSelf, value: str) -> ComponentSelf:
-        return set_immutable(self, "name", value)
+        return set_immutable(self, "_name", value)
+
+    @property
+    def name(self) -> str:
+        return self._name if self._name else self.__class__.__name__
+
+    @property
+    def full_name(self) -> str:
+        return pipe(
+            self.ancestors,
+            c.map(lambda item: item.log_name),
+            c.filter(lambda item: item is not None),
+            lambda s: chain(s, [self.name]),
+            lambda s: " → ".join(s),
+        )
+
+    @property
+    def log_name(self) -> Optional[str]:
+        return self.name
 
     @property
     def identifier(self):
@@ -101,101 +146,198 @@ class Component(Invokable, WithContext, Protocol):
             )
         )
 
+    def set_ancestors(self, ancestors):
+        self.ancestors = ancestors
+
     def _generate_identifier_base(self) -> str:
         file = self.__module__
         name = self.__class__.__name__
         return file + "." + name
 
-
-class Group(Component, Protocol):
-    def invoke_block(self, component: Component, data: InvocationData) -> InvocationData:
-        with_context = self._provide_context(component)
-        output = with_context.invoke(data)
+    def _invoke_node(
+            self,
+            component: "Component",
+            data: Optional[InvocationResult]
+    ) -> InvocationResult:
+        self.provide_context(component)
+        output = component.invoke(data)
         return output
 
 
-class Sequence(Group):
+class Group(Component):
     def __init__(self, initialize=None):
-        self.sequence = initialize if initialize else []
+        super().__init__(self)
+        self.group = []
+        if initialize:
+            for child in initialize:
+                self.append(child, immutable=False)
 
-    def invoke(self, data: InvocationData):
+    @abstractmethod
+    def append(self, node: "Node", immutable: bool = True):
+        raise NotImplementedError()
+
+    def propagate_context(self) -> None:
+        for child in self.group:
+            self.provide_context(child)
+            child.propagate_context()
+
+
+class Sequence(Group):
+    def invoke(self, invocation: InvocationResult = None):
         return (
             reduce(
-                lambda current_data, blocks: (
-                    self.invoke_block(
-                        blocks.current,
+                lambda current_data, nodes: (
+                    self._invoke_node(
+                        nodes.current,
                         current_data
                     )
                 ),
-                provide_previous(self.sequence),
-                data
+                provide_previous(self.group),
+                invocation
             )
         )
 
-    def append(self, block):
-        return immutable_action(self, lambda o: o.sequence.append(block))
+    def set_ancestors(self, ancestors):
+        ancestors = copy(ancestors)
+        super().set_ancestors(ancestors)
+        for child in self.group:
+            child.set_ancestors(ancestors)
+            ancestors = [*ancestors, child]
 
-    def __or__(self, next_block):
-        return self.append(next_block)
+    def append(self, node: "Node", immutable: bool = True):
+        appended_node = deepcopy(node)
+        self.provide_context(appended_node)
+        appended_node.propagate_context()
+        if self.group:
+            appended_node.set_ancestors(copy(self.group))
+        else:
+            appended_node.set_ancestors(self.ancestors)
+        change = lambda o: o.group.append(appended_node)
+        if immutable:
+            return immutable_action(self, change)
+        else:
+            change(self)
+            return self
 
-    def __and__(self, next_block):
-        return Parallel([self, next_block])
+    @property
+    def log_name(self) -> Optional[str]:
+        return None
+
+    def __copy__(self):
+        return copy_first_level(self)
+
+    def __getitem__(self, key: int) -> Component:
+        return self.group[key]
+
+    def __or__(self, next_node):
+        return self.append(next_node)
+
+    def __and__(self, next_node):
+        return Parallel([self, next_node])
 
     def __iter__(self):
-        return iter(self.sequence)
+        return iter(self.group)
 
 
 class Parallel(Group):
-    def __init__(self, initialize=None):
-        self.parallel = initialize if initialize else []
-
-    def invoke(self, data: InvocationData):
+    def invoke(self, invocation: InvocationResult = None):
         result = {
-            index: self.invoke_block(block, data)
-            for index, block in enumerate(self.parallel)
+            index: self._invoke_node(node, invocation)
+            for index, node in enumerate(self.group)
         }
         some_did_changed = pipe(
             result.values(),
-            c.map(lambda r: r.did_change),
+            c.map(lambda r: r.executed),
             any,
         )
-        return InvocationData(
-            did_change=some_did_changed,
+        return InvocationResult(
+            executed=some_did_changed,
             output=valmap(lambda r: r.output, result)
         )
 
-    def append(self, block):
-        return immutable_action(self, lambda o: o.parallel.append(block))
+    def provide_context(self, with_context: Any):
+        if self.ancestors:
+            return self.ancestors[-1].provide_context(with_context)
+        else:
+            super().provide_context(with_context)
+            return with_context
 
-    def __and__(self, next_block):
-        return self.append(next_block)
+    def set_ancestors(self, ancestors):
+        for child in self.group:
+            child.set_ancestors(ancestors)
 
-    def __or__(self, next_block):
-        return Sequence([self, next_block])
+    def append(self, node: "Node", immutable: bool = True):
+        appended_node = deepcopy(node)
+        self.provide_context(appended_node)
+        appended_node.ancestors = self.ancestors
+        appended_node.propagate_context()
+        change = lambda o: o.group.append(appended_node)
+        if immutable:
+            return immutable_action(self, change)
+        else:
+            change(self)
+            return self
+
+    @property
+    def log_name(self):
+        return "(%s)" % " & ".join(map(lambda item: item.log_name, self.group)).strip()
+
+    def __copy__(self):
+        return copy_first_level(self)
+
+    def __getitem__(self, key: int) -> Component:
+        return self.group[key]
+
+    def __and__(self, next_node):
+        return self.append(next_node)
+
+    def __or__(self, next_node):
+        return Sequence([self, next_node])
 
     def __iter__(self):
-        return iter(self.parallel)
+        return iter(self.group)
 
 
-class Block(Component):
-    DATA_CACHE_KEY = "data"
+@dataclass
+class NodeExecutionResponse:
+    should_execute: bool
+    reason: Optional[str] = None
+
+
+class Node(Component):
+    INPUT_CACHE_KEY = "data"
     CODE_STATE_CACHE_KEY = "code_state"
 
-    def invoke(self, data: InvocationData) -> InvocationData:
+    def invoke(self, invocation: InvocationResult = None) -> InvocationResult:
+        invocation = invocation or InvocationResult(
+            output=None,
+            executed=None,
+        )
         current_code_state = self._get_code_state()
-        cached_invocation = self._load_cached_data()
-        if self._should_execute(data.did_change, current_code_state, cached_invocation):
-            output = self.execute(data.output)
-            self._save_cached_data(output)
+        cached_invocation = self._load_cached_input()
+        execution_policy = self._should_execute(
+            invocation.executed,
+            current_code_state,
+            cached_invocation,
+        )
+
+        if invocation.output:
+            self._save_cached_input(invocation)
+
+        self._log_execution_policy(execution_policy)
+        if execution_policy.should_execute:
+            output = self.execute(
+                invocation.output or (cached_invocation and cached_invocation.output)
+            )
             self._save_cached_code_state(current_code_state)
-            return InvocationData(
+            return InvocationResult(
                 output=output,
-                did_change=cached_invocation.output == output if cached_invocation else True
+                executed=cached_invocation == output
             )
         else:
-            return InvocationData(
-                cached_invocation.output if cached_invocation else None,
-                did_change=True
+            return InvocationResult(
+                None,
+                executed=False
             )
 
     def execute(self, dataset):
@@ -203,33 +345,37 @@ class Block(Component):
 
     def _should_execute(
             self,
-            did_input_change: bool,
+            executed: Optional[bool],
             current_state: CodeState,
-            cached_invocation: Optional[InvocationData]
-    ) -> bool:
-        if not cached_invocation:
-            return True
+            cached_input: Optional[InvocationResult]
+    ) -> NodeExecutionResponse:
+        if not cached_input:
+            return NodeExecutionResponse(True, "Not cached.")
         elif self.cache_behaviour == CacheBehaviour.ALWAYS:
-            return False
+            return NodeExecutionResponse(False, "CacheEngine behaviour: Always.")
         elif self.cache_behaviour == CacheBehaviour.NEVER:
-            return True
+            return NodeExecutionResponse(True, "CacheEngine behaviour: Never.")
         else:
-            return self._did_code_changed(current_state) or did_input_change
+            should_execute = \
+                self._did_code_changed(current_state) or \
+                executed is True or \
+                executed is None
+            return NodeExecutionResponse(should_execute)
 
     def _get_code_state(self):
         module_name = inspect.getmodule(self).__name__
+
         return CodeStateGenerator(module_name).get()
 
     def _did_code_changed(self, current_state: CodeState) -> bool:
         cached_state = self._load_cached_code_state()
         if cached_state:
             diff = {k: current_state[k] for k in set(current_state) - set(cached_state)}
-            print("diff", diff)
         return cached_state == current_state
 
-    def _load_cached_data(self) -> Optional[CachedOutput]:
+    def _load_cached_input(self) -> Optional[CachedOutput]:
         try:
-            return self.cache_engine.get((self.identifier, self.DATA_CACHE_KEY))
+            return self.cache_engine.get((self.identifier, self.INPUT_CACHE_KEY))
         except CacheMissException:
             return None
 
@@ -239,14 +385,21 @@ class Block(Component):
         except CacheMissException:
             return None
 
-    def _save_cached_data(self, data: Any) -> None:
-        self.cache_engine.set((self.identifier, self.DATA_CACHE_KEY), data)
+    def _save_cached_input(self, data: Any) -> None:
+        self.cache_engine.set((self.identifier, self.INPUT_CACHE_KEY), data)
 
     def _save_cached_code_state(self, value: CodeState) -> None:
         self.cache_engine.set((self.identifier, self.CODE_STATE_CACHE_KEY), value)
 
-    def __or__(self, next_block):
-        return Sequence([self, next_block])
+    def _log_execution_policy(self, execution_policy: NodeExecutionResponse) -> None:
+        if self.log_level >= LogLevel.ENABLED:
+            if execution_policy.should_execute:
+                log("%s. %s" % (self.full_name, execution_policy.reason))
+            else:
+                log("Cached. %s. %s" % (self.full_name, execution_policy.reason or ""))
 
-    def __and__(self, next_block):
-        return Parallel([self, next_block])
+    def __or__(self, next_node):
+        return Sequence([self, next_node])
+
+    def __and__(self, next_node):
+        return Parallel([self, next_node])

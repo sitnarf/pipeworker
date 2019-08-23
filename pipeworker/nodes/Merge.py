@@ -3,7 +3,7 @@ from itertools import chain
 from collections.abc import Mapping
 from functools import reduce
 from typing import Iterable, TypeVar, List, Dict, Union
-from pipeworker.base import Block
+from pipeworker.base import Node
 from pipeworker.utils import is_primitive
 
 
@@ -14,18 +14,18 @@ def merge_iterable(value1: Iterable, value2: Iterable) -> List:
     return list(chain(value1, value2))
 
 
-class Merge(Block):
+class Merge(Node):
 
     _highest_number = 0
 
-    def invoke(self, data: Union[Iterable[T], Dict] = None) -> T:
+    def invoke(self, invocation: Union[Iterable[T], Dict] = None) -> T:
         return reduce(
             lambda current, next_item:
             self.merge(
                 current,
                 next_item
             ),
-            data.values() if isinstance(data, collections.Mapping) else data,
+            invocation.values() if isinstance(invocation, collections.Mapping) else invocation,
             {}
         )
 

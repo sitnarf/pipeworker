@@ -1,11 +1,11 @@
 import unittest
 
-from pipeworker.base import Block, Pipeline
-from pipeworker.blocks.Data import Data
-from pipeworker.blocks.Merge import Merge
+from pipeworker.base import Node, Pipeline
+from pipeworker.nodes.Data import Data
+from pipeworker.nodes.Merge import Merge
 
 
-class MultiplyBy(Block):
+class MultiplyBy(Node):
     def __init__(self, what, by):
         self.by = by
         self.what = what
@@ -16,7 +16,7 @@ class MultiplyBy(Block):
         }
 
 
-class MergeBlockTest(unittest.TestCase):
+class MergenodeTest(unittest.TestCase):
     def test_merge(self):
         result = Pipeline(
             ((

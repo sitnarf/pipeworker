@@ -1,10 +1,10 @@
 from typing import Iterable
 from matplotlib import pyplot
-from pipeworker.base import Block
+from pipeworker.base import Node
 from pipeworker.types import Dataset
 
 
-class PlotForecast(Block):
+class PlotForecast(Node):
 
     def __init__(self, columns: Iterable[str], label: str = None, file: str = None):
         self.label = label

@@ -17,7 +17,7 @@ class CachedOutput:
     output: Any
 
 
-class Cache(Protocol):
+class CacheEngine(Protocol):
     @abstractmethod
     def set(self, key: Union[str, Iterable[str]], value: Any) -> None:
         raise NotImplementedError()
@@ -33,13 +33,17 @@ class Cache(Protocol):
         return k if isinstance(k, str) else "_".join(k)
 
 
-class FileCache(Cache):
+class FileCacheEngine(CacheEngine):
     def __init__(self, cache_file=None):
         self.cache_file = cache_file
 
     def set(self, key, value):
-        cache = self._get_cache()
+        try:
+            cache = self._get_cache()
+        except CacheMissException:
+            cache = {}
         cache[self._make_key(key)] = value
+        self._set_cache(cache)
 
     def get(self, key):
         cache = self._get_cache()
@@ -69,8 +73,11 @@ class FileCache(Cache):
             return open(cache_file, mode)
 
     def _get_cache(self):
-        with self._get_resource("rb") as file:
-            return pickle.load(file)
+        try:
+            with self._get_resource("rb") as file:
+                return pickle.load(file)
+        except EOFError:
+            raise CacheMissException
 
     def _set_cache(self, cache):
         with self._get_resource("wb+") as file:

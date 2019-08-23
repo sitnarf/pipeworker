@@ -1,9 +1,9 @@
 import unittest
-from pipeworker.base import Block, Pipeline
-from pipeworker.blocks.Data import Data
+from pipeworker.base import Node, Pipeline
+from pipeworker.nodes.Data import Data
 
 
-class MultiplyBy(Block):
+class MultiplyBy(Node):
 
     def __init__(self, what, by):
         self.by = by
