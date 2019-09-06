@@ -28,7 +28,7 @@ class MeasureTest(unittest.TestCase):
         evaluate = Measure([metric1, metric2], "a")
 
         self.assertEqual(
-            evaluate.invoke(input_dataset).payload,
+            evaluate.fit(input_dataset).payload,
             {'a': 3, 'b': 'a'},
         )
 

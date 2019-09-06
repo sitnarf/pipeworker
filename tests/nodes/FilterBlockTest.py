@@ -8,7 +8,7 @@ class MultiplyBy(Node):
     def __init__(self, by):
         self.by = by
 
-    def execute(self, input_data=None):
+    def fit(self, input_data=None):
         return input_data < 3
 
 

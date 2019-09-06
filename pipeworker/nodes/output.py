@@ -8,11 +8,11 @@ class Each(Component):
     def __init__(self, node: Component):
         self.node = node
 
-    def invoke(self, invocation: InvocationResult = None):
+    def fit(self, invocation: InvocationResult = None):
         result = (
             valmap(
                 lambda value: (
-                    self._invoke_node(self.node, InvocationResult(value, invocation.executed))
+                    self._invoke_fit(self.node, InvocationResult(value, invocation.executed))
                 ),
                 invocation.output,
             )

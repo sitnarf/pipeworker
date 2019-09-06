@@ -12,11 +12,11 @@ class Map(Component):
     def log_name(self):
         return "%s(%s)" % (self.__class__.__name__, self.node.log_name)
 
-    def invoke(self, invocation: InvocationResult = None):
+    def fit(self, invocation: InvocationResult = None):
         result = (
             valmap(
                 lambda value: (
-                    self._invoke_node(self.node, InvocationResult(value, invocation.executed))
+                    self._invoke_fit(self.node, InvocationResult(value, invocation.executed))
                 ),
                 invocation.output,
             )

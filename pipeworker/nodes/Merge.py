@@ -18,7 +18,7 @@ class Merge(Node):
 
     _highest_number = 0
 
-    def invoke(self, invocation: Union[Iterable[T], Dict] = None) -> T:
+    def fit(self, invocation: Union[Iterable[T], Dict] = None) -> T:
         return reduce(
             lambda current, next_item:
             self.merge(

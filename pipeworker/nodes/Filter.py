@@ -9,7 +9,7 @@ class Filter(Node):
     def __init__(self, node: Invokable):
         self.node = node
 
-    def execute(self, data):
+    def fit(self, data):
         return (
             (valfilter if isinstance(data, Mapping) else filter)(
                 lambda value: self.node.invoke(value),

@@ -11,7 +11,7 @@ class PlotForecast(Node):
         self.columns = columns
         self.file = file
 
-    def execute(self, dataset: Dataset) -> Dataset:
+    def fit(self, dataset: Dataset) -> Dataset:
         if self.label:
             pyplot.title(self.label)
         for column in self.columns:

@@ -1,16 +1,13 @@
 from typing import Optional
 
-from colored import fg, attr
-
 from pipeworker.base import Node, InvocationResult, NodeExecutionResponse
 from pipeworker.cache_engine import CodeState
 from pipeworker.functions.utils import title, table
 from pipeworker.types import Dataset
-from pipeworker.utils import log
 
 
 class PrintMeasurements(Node):
-    def execute(self, dataset: Dataset) -> Dataset:
+    def fit(self, dataset: Dataset) -> Dataset:
         print()
         if dataset.label:
             print(title("Measurements for %s" % dataset.label))
@@ -24,7 +21,7 @@ class PrintMeasurements(Node):
 
         return dataset
 
-    def _should_execute(
+    def _should_execute_fit(
             self,
             executed: Optional[bool],
             current_state: CodeState,
@@ -33,5 +30,4 @@ class PrintMeasurements(Node):
         return NodeExecutionResponse(should_execute=True)
 
     def _log_execution_policy(self, execution_policy: NodeExecutionResponse) -> None:
-        print()
-        log(fg(245) + self.full_name + attr('reset'))
+        pass

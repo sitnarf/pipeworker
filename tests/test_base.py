@@ -56,15 +56,15 @@ class BaseTest(unittest.TestCase):
                     output="abc"
                 )
 
-            def execute(self, dataset):
+            def fit(self, dataset):
                 return "123"
 
         node = CacheBehaviourTestNode().not_cache()
-        data = node.invoke(InvocationResult("abc", executed=False))
+        data = node.fit(InvocationResult("abc", executed=False))
         self.assertEqual("123", data.output)
 
         node = CacheBehaviourTestNode().cache()
-        data = node.invoke(InvocationResult("abc", executed=False))
+        data = node.fit(InvocationResult("abc", executed=False))
         self.assertEqual(None, data.output)
         self.assertEqual(False, data.executed)
 
@@ -99,11 +99,11 @@ class BaseTest(unittest.TestCase):
                     output="abc"
                 )
 
-            def execute(self, dataset):
+            def fit(self, dataset):
                 return "123"
 
         node = CodeDidChangeTestNode()
-        data = node.invoke(InvocationResult("x"))
+        data = node.fit(InvocationResult("x"))
         self.assertEqual("123", data.output)
 
         class CodeDidNotChangeTestNode(Node):
@@ -116,16 +116,16 @@ class BaseTest(unittest.TestCase):
                     output="123_cached"
                 )
 
-            def execute(self, dataset):
+            def fit(self, dataset):
                 return "123_executed"
 
         node = CodeDidNotChangeTestNode()
-        data = node.invoke(InvocationResult("abc", executed=False))
+        data = node.fit(InvocationResult("abc", executed=False))
         self.assertEqual(data.output, None)
 
     def test_code_change(self):
         node = SomeNode()
-        node.execute(None)
+        node.fit(None)
 
     def test_name(self):
         node = SomeNode()

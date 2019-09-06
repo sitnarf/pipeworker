@@ -9,7 +9,7 @@ class MultiplyBy(Node):
         self.by = by
         self.what = what
 
-    def execute(self, input_data):
+    def fit(self, input_data):
         return {
             self.what: input_data[self.what] * self.by
         }

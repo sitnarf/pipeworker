@@ -7,7 +7,7 @@ class TrainTestSplit(Node):
     def __init__(self, **params):
         self.params = params
 
-    def execute(self, dataset: Dataset):
+    def fit(self, dataset: Dataset):
         (train, predict) = train_test_split(dataset.data, **self.params)
         return dataset.update(
             train=train,

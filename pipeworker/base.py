@@ -28,7 +28,7 @@ class Pipeline:
         self.pipeline = pipeline
 
     def execute(self, data=None):
-        return self.pipeline.invoke(InvocationResult(data)).output
+        return self.pipeline.fit(InvocationResult(data)).output
 
 
 @dataclass
@@ -38,9 +38,15 @@ class InvocationResult:
 
 
 class Invokable(Protocol):
-    @abstractmethod
-    def invoke(self, invocation: InvocationResult = None) -> InvocationResult:
-        raise NotImplementedError()
+    def invoke_fit(self, _: InvocationResult = None):
+        return self
+
+    def transform(self, X=None):
+        return X
+
+    def fit_transform(self, X):
+        self.fit(X)
+        return self.transform(X)
 
 
 class CacheBehaviour(Enum):
@@ -154,13 +160,13 @@ class Component(Invokable, WithContext, Protocol):
         name = self.__class__.__name__
         return file + "." + name
 
-    def _invoke_node(
+    def _invoke_fit(
             self,
             component: "Component",
             data: Optional[InvocationResult]
     ) -> InvocationResult:
         self.provide_context(component)
-        output = component.invoke(data)
+        output = component.fit_transform(data)
         return output
 
 
@@ -183,11 +189,11 @@ class Group(Component):
 
 
 class Sequence(Group):
-    def invoke(self, invocation: InvocationResult = None):
+    def _invoke_fit(self, invocation: InvocationResult = None):
         return (
             reduce(
                 lambda current_data, nodes: (
-                    self._invoke_node(
+                    self._invoke_fit(
                         nodes.current,
                         current_data
                     )
@@ -196,6 +202,9 @@ class Sequence(Group):
                 invocation
             )
         )
+
+    def fit(self):
+        return self._invoke_fit()
 
     def set_ancestors(self, ancestors):
         ancestors = copy(ancestors)
@@ -240,9 +249,9 @@ class Sequence(Group):
 
 
 class Parallel(Group):
-    def invoke(self, invocation: InvocationResult = None):
+    def fit(self, invocation: InvocationResult = None):
         result = {
-            index: self._invoke_node(node, invocation)
+            index: self._invoke_fit(node, invocation)
             for index, node in enumerate(self.group)
         }
         some_did_changed = pipe(
@@ -308,25 +317,28 @@ class Node(Component):
     INPUT_CACHE_KEY = "data"
     CODE_STATE_CACHE_KEY = "code_state"
 
-    def invoke(self, invocation: InvocationResult = None) -> InvocationResult:
+    def invoke_fit(self, invocation: InvocationResult = None) -> InvocationResult:
         invocation = invocation or InvocationResult(
             output=None,
             executed=None,
         )
         current_code_state = self._get_code_state()
         cached_invocation = self._load_cached_input()
-        execution_policy = self._should_execute(
+        execution_policy = self._should_execute_fit(
             invocation.executed,
             current_code_state,
             cached_invocation,
         )
 
-        if invocation.output:
-            self._save_cached_input(invocation)
+        try:
+            if not invocation.output.empty:
+                self._save_cached_input(invocation)
+        except AttributeError:
+            pass
 
         self._log_execution_policy(execution_policy)
         if execution_policy.should_execute:
-            output = self.execute(
+            output = self.fit(
                 invocation.output or (cached_invocation and cached_invocation.output)
             )
             self._save_cached_code_state(current_code_state)
@@ -340,10 +352,10 @@ class Node(Component):
                 executed=False
             )
 
-    def execute(self, dataset):
+    def fit(self, dataset=None):
         return dataset
 
-    def _should_execute(
+    def _should_execute_fit(
             self,
             executed: Optional[bool],
             current_state: CodeState,
@@ -394,9 +406,9 @@ class Node(Component):
     def _log_execution_policy(self, execution_policy: NodeExecutionResponse) -> None:
         if self.log_level >= LogLevel.ENABLED:
             if execution_policy.should_execute:
-                log("%s. %s" % (self.full_name, execution_policy.reason))
+                log("%s. %s" % (self.full_name, execution_policy.reason or ""))
             else:
-                log("Cached. %s. %s" % (self.full_name, execution_policy.reason or ""))
+                log("%s. Cached. %s" % (self.full_name, execution_policy.reason or ""))
 
     def __or__(self, next_node):
         return Sequence([self, next_node])

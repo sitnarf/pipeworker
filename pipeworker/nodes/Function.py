@@ -8,5 +8,5 @@ class Function(Node):
     def __init__(self, function: Callable[[Any], Any]):
         self.function = function
 
-    def execute(self, data):
+    def fit(self, data):
         return self.function(data)

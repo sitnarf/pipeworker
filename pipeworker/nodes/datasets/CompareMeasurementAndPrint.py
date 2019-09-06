@@ -6,7 +6,6 @@ from pydash import sort
 from pipeworker.base import Node, NodeExecutionResponse
 from pipeworker.functions.utils import title, sign_color, table
 from pipeworker.types import Dataset
-from pipeworker.utils import log
 
 
 class CompareMeasurementAndPrint(Node):
@@ -48,7 +47,7 @@ class CompareMeasurementAndPrint(Node):
             table.append(line)
         return table
 
-    def execute(self, datasets: Dict[str, Dataset]) -> Dict[str, Dataset]:
+    def fit(self, datasets: Dict[str, Dataset]) -> Dict[str, Dataset]:
         computed = self.compute(datasets)
         output: List = []
 
@@ -75,5 +74,4 @@ class CompareMeasurementAndPrint(Node):
         return datasets
 
     def _log_execution_policy(self, execution_policy: NodeExecutionResponse) -> None:
-        print()
-        log(self.full_name)
+        pass
